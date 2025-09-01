@@ -5,6 +5,21 @@ const fs = require('fs');
 let win;
 const remindersFile = path.join(app.getPath('userData'), 'reminders.json');
 
+function ensureFile() {
+    if (!fs.existsSync(remindersFile)) {
+        fs.writeFileSync(remindersFile, JSON.stringify([]));
+    }
+}
+
+function loadReminders() {
+    ensureFile();
+    return JSON.parse(fs.readFileSync(remindersFile));
+}
+
+function saveReminders(reminders) {
+    fs.writeFileSync(remindersFile, JSON.stringify(reminders));
+}
+
 function createWindow() {
     win = new BrowserWindow({
         width: 400,
@@ -23,43 +38,52 @@ function createWindow() {
 }
 
 function scheduleReminder(reminder) {
-    const delay = reminder.time - Date.now();
-    if (delay > 0) {
+    const MAX_DELAY = 2147483647;
+
+    const now = Date.now();
+    const delay = reminder.time - now;
+
+    if (delay <= 0) {
+        new Notification({ title: "Reminder", body: reminder.text }).show();
+        return;
+    }
+
+    if (delay > MAX_DELAY) {
+        setTimeout(() => scheduleReminder(reminder), MAX_DELAY);
+    } else {
         setTimeout(() => {
             new Notification({ title: "Reminder", body: reminder.text }).show();
         }, delay);
     }
 }
 
-function loadSavedReminders() {
-    if (fs.existsSync(remindersFile)) {
-        const reminders = JSON.parse(fs.readFileSync(remindersFile));
-        reminders.forEach(scheduleReminder);
-    }
-}
-
 app.whenReady().then(() => {
     createWindow();
-    loadSavedReminders();
+    loadReminders().forEach(scheduleReminder);
 
     globalShortcut.register('CommandOrControl+Shift+R', () => {
         if (win.isVisible()) {
             win.hide();
         } else {
             win.show();
+            win.webContents.send('reminders', loadReminders());
         }
     });
 
     ipcMain.on('schedule-reminder', (event, reminder) => {
-        scheduleReminder(reminder);
-
-        // persist to reminders.json
-        let reminders = [];
-        if (fs.existsSync(remindersFile)) {
-            reminders = JSON.parse(fs.readFileSync(remindersFile));
-        }
+        const reminders = loadReminders();
         reminders.push(reminder);
-        fs.writeFileSync(remindersFile, JSON.stringify(reminders));
+        saveReminders(reminders);
+
+        scheduleReminder(reminder);
+        win.webContents.send('reminders', reminders);
+    });
+
+    ipcMain.on('delete-reminder', (event, index) => {
+        let reminders = loadReminders();
+        reminders.splice(index, 1);
+        saveReminders(reminders);
+        win.webContents.send('reminders', reminders);
     });
 
     app.on('activate', () => {
