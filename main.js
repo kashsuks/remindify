@@ -44,7 +44,7 @@ function scheduleReminder(reminder) {
     const delay = reminder.time - now;
 
     if (delay <= 0) {
-        new Notification({ title: "Reminder", body: reminder.text }).show;
+        new Notification({ title: "Reminder", body: reminder.text }).show();
         return;
     }
 
