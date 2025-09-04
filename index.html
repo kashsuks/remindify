@@ -1,23 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Remindify</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        input, button { font-size: 16px; margin-top: 10px; width: 100%; }
-        ul { margin-top: 20px; padding: 0; }
-        li { margin: 5px 0; list-style: none; }
-        button { width: auto; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Reminders</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h2>Set a Reminder</h2>
-    <input id="reminderInput" placeholder="Type your reminder..." />
-    <input id="timeInput" type="datetime-local" />
-    <button id="saveBtn">Save</button>
-    <ul id="reminderList"></ul>
+  <h2>Reminders</h2>
+  <div class="glass" style="padding: 20px; width: 100%; max-width: 400px;">
+    <form id="reminder-form">
+      <input type="text" id="reminder-text" placeholder="Reminder text" required>
+      <input type="datetime-local" id="reminder-time" required>
+      <button type="submit" id="save-btn" class="glass">Save Reminder</button>
+    </form>
+    <ul id="reminder-list"></ul>
+  </div>
 
-    <script src="renderer.js"></script>
+  <script src="renderer.js"></script>
 </body>
 </html>
